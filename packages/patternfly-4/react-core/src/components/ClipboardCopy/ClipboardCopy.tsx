@@ -44,6 +44,7 @@ export interface ClipboardCopyProps extends Omit<React.HTMLProps<HTMLDivElement>
   toggleAriaLabel?: string;
   /** Flag to show if the input is read only. */
   isReadOnly?: boolean;
+  expandeddefault?: boolean;
   /** Adds Clipboard Copy variant styles. */
   variant?: typeof ClipboardCopyVariant | 'inline' | 'expansion'; 
   /** Copy button popover position. */
@@ -71,7 +72,7 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
     this.state = {
       text: this.props.children as string | number,
       expanded: false,
-      copied: false
+      copied: false,
     };
   }
 
@@ -102,9 +103,16 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
     this.props.onChange(text);
   };
 
+  static getDerivedStateFromProps(nextProps, prevState) {
+    return nextProps.expandeddefault === prevState.expanded
+      ? {}
+      : {expanded: nextProps.expandeddefault}
+  }
+
   render = () => {
     const {
       isReadOnly,
+      expandeddefault,
       exitDelay,
       maxWidth,
       entryDelay,

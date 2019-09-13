@@ -26,7 +26,7 @@ export enum ClipboardCopyVariant {
 }
 
 export interface ClipboardCopyState {
-  text: string | number; 
+  text: string | number;
   expanded: boolean;
   copied: boolean;
 }
@@ -44,9 +44,10 @@ export interface ClipboardCopyProps extends Omit<React.HTMLProps<HTMLDivElement>
   toggleAriaLabel?: string;
   /** Flag to show if the input is read only. */
   isReadOnly?: boolean;
-  expandeddefault?: boolean;
+  /** Flag to determine if clipboard copy is expanded by default */
+  isExpanded?: boolean;
   /** Adds Clipboard Copy variant styles. */
-  variant?: typeof ClipboardCopyVariant | 'inline' | 'expansion'; 
+  variant?: typeof ClipboardCopyVariant | 'inline' | 'expansion';
   /** Copy button popover position. */
   position?: OneOf<typeof PopoverPosition, keyof typeof PopoverPosition>;
   /** Maximum width of the tooltip (default 150px). */
@@ -66,13 +67,13 @@ export interface ClipboardCopyProps extends Omit<React.HTMLProps<HTMLDivElement>
 }
 
 export class ClipboardCopy extends React.Component<ClipboardCopyProps, ClipboardCopyState> {
-  timer = null as NodeJS.Timer;
+  timer = null as number;
   constructor(props: ClipboardCopyProps) {
     super(props);
     this.state = {
       text: this.props.children as string | number,
-      expanded: false,
-      copied: false,
+      expanded: this.props.isExpanded,
+      copied: false
     };
   }
 
@@ -80,7 +81,7 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
     hoverTip: 'Copy to clipboard',
     clickTip: 'Successfully copied to clipboard!',
     isReadOnly: false,
-    variant: 'inline', 
+    variant: 'inline',
     position: TooltipPosition.top,
     maxWidth: '150px',
     exitDelay: 1600,
@@ -90,29 +91,28 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
     onChange: (): any => undefined,
     textAriaLabel: 'Copyable input',
     toggleAriaLabel: 'Show content'
+  };
+
+  componentDidUpdate = (prevProps: ClipboardCopyProps, prevState: ClipboardCopyState) => {
+    if (prevProps.children !== this.props.children) {
+      this.updateText(this.props.children as string | number);
+    }
   }
-  
+
   expandContent = (_event: React.MouseEvent<Element, MouseEvent>) => {
-    this.setState(prevState => ({
+    this.setState((prevState) => ({
       expanded: !prevState.expanded
     }));
-  };
+  }
 
   updateText = (text: string | number) => {
     this.setState({ text });
     this.props.onChange(text);
-  };
-
-  static getDerivedStateFromProps(nextProps, prevState) {
-    return nextProps.expandeddefault === prevState.expanded
-      ? {}
-      : {expanded: nextProps.expandeddefault}
   }
 
   render = () => {
     const {
       isReadOnly,
-      expandeddefault,
       exitDelay,
       maxWidth,
       entryDelay,
@@ -137,7 +137,7 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
         {...divProps}
       >
         <GenerateId prefix="">
-          {id => (
+          {(id) => (
             <React.Fragment>
               <div className={css(styles.clipboardCopyGroup)}>
                 {variant === 'expansion' && (
@@ -167,12 +167,12 @@ export class ClipboardCopy extends React.Component<ClipboardCopyProps, Clipboard
                   aria-label={hoverTip}
                   onClick={(event: any) => {
                     if (this.timer) {
-                      clearTimeout(this.timer);
+                      window.clearTimeout(this.timer);
                       this.setState({ copied: false });
                     }
                     onCopy(event, this.state.text);
                     this.setState({ copied: true }, () => {
-                      this.timer = setTimeout(() => {
+                      this.timer = window.setTimeout(() => {
                         this.setState({ copied: false });
                         this.timer = null;
                       }, switchDelay);
